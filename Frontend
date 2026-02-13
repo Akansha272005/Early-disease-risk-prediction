@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Early Disease Risk Prediction</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <h2>Early Disease Risk Prediction</h2>
+
+  <label>Age:</label>
+  <input type="number" id="age" value="35">
+
+  <label>BMI:</label>
+  <input type="number" id="bmi" value="27.5" step="0.1">
+
+  <label>Sleep (hours):</label>
+  <input type="number" id="sleep" value="6" step="0.1">
+
+  <label>Sugar Intake (grams/day):</label>
+  <input type="number" id="sugar" value="40" step="0.1">
+
+  <label>Regular Exercise:</label>
+  <select id="exercise">
+    <option value="1">Yes</option>
+    <option value="0">No</option>
+  </select>
+
+  <label>Smoking:</label>
+  <select id="smoking">
+    <option value="0">Non-Smoker</option>
+    <option value="1">Smoker</option>
+  </select>
+
+  <label>Alcohol:</label>
+  <select id="alcohol">
+    <option value="0">No</option>
+    <option value="1">Yes</option>
+  </select>
+
+  <label>Married:</label>
+  <select id="married">
+    <option value="1">Married</option>
+    <option value="0">Unmarried</option>
+  </select>
+
+  <button onclick="predictRisk()">Predict Risk</button>
+
+  <div id="result" class="result-box"></div>
+
+  <img id="graph" src="" alt="Risk Graph">
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
+
+function predictRisk() {
+  const data = {
+    age: parseFloat(document.getElementById("age").value),
+    bmi: parseFloat(document.getElementById("bmi").value),
+    sleep: parseFloat(document.getElementById("sleep").value),
+    sugar_intake: parseFloat(document.getElementById("sugar").value),
+    exercise: parseInt(document.getElementById("exercise").value),
+    smoking: parseInt(document.getElementById("smoking").value),
+    alcohol: parseInt(document.getElementById("alcohol").value),
+    married: parseInt(document.getElementById("married").value)
+  };
+
+  fetch("http://127.0.0.1:5000/predict", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(result => {
+    if (result.error) {
+      document.getElementById("result").innerHTML =
+        `<span class="error">Error: ${result.error}</span>`;
+      document.getElementById("graph").style.display = "none";
+    } else {
+      document.getElementById("result").innerHTML = `
+        <strong>Input Summary</strong><br>
+        Age: ${data.age}<br>
+        BMI: ${data.bmi}<br>
+        Sleep: ${data.sleep} hrs<br>
+        Sugar Intake: ${data.sugar_intake} g/day<br>
+        Exercise: ${data.exercise ? "Yes" : "No"}<br>
+        Smoking: ${data.smoking ? "Smoker" : "Non-Smoker"}<br>
+        Alcohol: ${data.alcohol ? "Yes" : "No"}<br>
+        Married: ${data.married ? "Yes" : "No"}<br><br>
+
+        <strong>Predicted Risk:</strong> ${result.risk}<br>
+        <strong>Probability:</strong> ${result.probability}%
+      `;
+
+      const graph = document.getElementById("graph");
+      graph.style.display = "block";
+      graph.src = "http://127.0.0.1:5000" + result.graph_url + "?t=" + new Date().getTime();
+    }
+  })
+  .catch(err => {
+    document.getElementById("result").innerHTML =
+      `<span class="error">Error: ${err}</span>`;
+  });
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+}
+
+.container {
+  background: white;
+  width: 380px;
+  margin: 40px auto;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  text-align: left;
+}
+
+h2 {
+  text-align: center;
+}
+
+label {
+  font-weight: bold;
+}
+
+input, select, button {
+  width: 100%;
+  margin: 6px 0 12px 0;
+  padding: 8px;
+}
+
+button {
+  background: green;
+  color: white;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+button:hover {
+  background: darkgreen;
+}
+
+.result-box {
+  margin-top: 15px;
+  padding: 10px;
+  background: #eef6ff;
+  border-radius: 5px;
+  line-height: 1.6;
+}
+
+.error {
+  color: red;
+}
+
+#graph {
+  display: none;
+  width: 100%;
+  margin-top: 15px;
+}
